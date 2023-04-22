@@ -10,6 +10,7 @@ void bitOperations(int num)
 	cout <<"Task1:" << endl;
 	cout << "Number is: " << num << endl;
 	cout << "Binary presentation: " << bitset<32>(num) << endl;
+
 	int outArr[ARR_SIZE];
 
 	for (int i = 0; i < ARR_SIZE; i++) {
