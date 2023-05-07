@@ -170,7 +170,7 @@ UINT CRunnerDlg::TrackMouse(LPVOID param)
 	CString inProgressText("Capturing mouse track...");
 	ts->_this->SetDlgItemTextW(STATUS_LABEL, inProgressText);
 	set_measurement_resolution(20);
-	set_track_time(10000);
+	set_track_time(60000);
 	ts->_this->SetPoints(mouse_track());
 	CString readyText("Ready. You can start capture again");
 	ts->_this->SetDlgItemTextW(STATUS_LABEL, readyText);
