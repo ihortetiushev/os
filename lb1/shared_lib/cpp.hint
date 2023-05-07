@@ -1,0 +1,2 @@
+#define SHAREDLIB_API __declspec(dllexport)
+#define SHAREDLIB_API __declspec(dllimport)
