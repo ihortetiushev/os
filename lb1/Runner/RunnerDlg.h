@@ -5,13 +5,15 @@
 #pragma once
 #include <vector> 
 
+const int TOTAL_TRACK_TIME_MS = 20000;
+const int TRACKING_INTERVAL_MS = 20;
 // CRunnerDlg dialog
 class CRunnerDlg : public CDialogEx
 {
 	static UINT TrackMouse(LPVOID param);
 	typedef struct THREADSTRUCT
 	{
-		CRunnerDlg* _this;
+		CRunnerDlg* dialog;
 		//you can add here other parameters you might be interested on
 	} THREADSTRUCT;
 // Construction

@@ -165,23 +165,25 @@ void CRunnerDlg::SetPoints(std::vector<POINT> points)
 UINT CRunnerDlg::TrackMouse(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
-	CWnd* fieldOK = ts->_this->GetDlgItem(IDOK);
+	CWnd* fieldOK = ts->dialog->GetDlgItem(IDOK);
 	fieldOK->EnableWindow(FALSE);
-	CString inProgressText("Capturing mouse track...");
-	ts->_this->SetDlgItemTextW(STATUS_LABEL, inProgressText);
-	set_measurement_resolution(20);
-	set_track_time(60000);
-	ts->_this->SetPoints(mouse_track());
+	int timeInSec = TOTAL_TRACK_TIME_MS / 1000;
+	CString timeStr(std::to_string(timeInSec).c_str());
+	CString inProgressText(_T("Capturing mouse track for ") + timeStr + _T(" sec..."));
+	ts->dialog->SetDlgItemTextW(STATUS_LABEL, inProgressText);
+	set_measurement_resolution(TRACKING_INTERVAL_MS);
+	set_track_time(TOTAL_TRACK_TIME_MS);
+	ts->dialog->SetPoints(mouse_track());
 	CString readyText("Ready. You can start capture again");
-	ts->_this->SetDlgItemTextW(STATUS_LABEL, readyText);
+	ts->dialog->SetDlgItemTextW(STATUS_LABEL, readyText);
 	fieldOK->EnableWindow(TRUE);
 	return TRUE;
 }
 
 void CRunnerDlg::OnBnClickedOk()
 {
-	THREADSTRUCT* _param = new THREADSTRUCT;
-	_param->_this = this;
+	THREADSTRUCT* param = new THREADSTRUCT;
+	param->dialog = this;
 	//running in a separate thread in order not to block the UI
-	AfxBeginThread(TrackMouse, _param);
+	AfxBeginThread(TrackMouse, param);
 }
