@@ -54,15 +54,7 @@ BOOL CReceiverDlg::OnInitDialog()
 	rcDesktop.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	rcDesktop.bottom = rcDesktop.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 	MoveWindow(rcDesktop, FALSE);
-	//RECT rect;
-	//GetWindowRect(&rect);
 
-	//int width;
-	//int height;
-
-	// Code for calculating width and height
-
-//	SetWindowPos(&wndTop, rect.left, rect.top, width, height, SWP_SHOWWINDOW);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -93,26 +85,7 @@ void CReceiverDlg::OnPaint()
 	}
 	else
 	{
-	
-		//CPaintDC* pDC = new CPaintDC(this);
-		//pDC->Rectangle(1, 1, 100, 100);
-		/*CRect client;
-		GetClientRect(&client);
-		CDC* dc = GetDC();
-		//dc->LineTo(100, 100);
-		Graphics graphics(dc->m_hDC);
-		Pen redPen(Color(255,0,0), 2.0);
-		// Initialize the coordinates of the points that define the line.
-		INT x1 = 0;
-		INT y1 = 0;
-		INT x2 = 100;
-		INT y2 = 100;
-
-		// Draw the line.
-		graphics.DrawLine(&redPen, 10, 10, 100, 100);*/
-	
 		CDialogEx::OnPaint();
-		//ReleaseDC(dc);
 	}
 }
 
@@ -130,11 +103,11 @@ void CReceiverDlg::OnBnClickedBtn1()
 	THREADSTRUCT* param = new THREADSTRUCT;
 	param->dialog = this;
 	//running in a separate thread in order not to block the UI
-	AfxBeginThread(DoSomethingInSeparateThread, param);
+	AfxBeginThread(StartProducer, param);
 
 }
 
-UINT CReceiverDlg::DoSomethingElseInSeparateThread(LPVOID param)
+UINT CReceiverDlg::StartConsumer(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
 	CRect client;
@@ -150,13 +123,29 @@ UINT CReceiverDlg::DoSomethingElseInSeparateThread(LPVOID param)
 	REAL sweepAngle = 360;
 	// Draw arc to screen.
 	graphics.DrawArc(&redPen, rect, startAngle, sweepAngle);
-	ts->dialog->SetDlgItemTextW(LABEL2, _T("100"));
-	for (int i = 10; i > 0; i--)
+	ts->dialog->SetDlgItemTextW(LABEL2, _T(""));
+	while (true) 
 	{
-		CString timeStr(std::to_string(i).c_str());
+		std::unique_lock<std::mutex> lock(ts->dialog->mu);
+		ts->dialog->cv.wait(lock, [ts] {return ts->dialog->dataPartIsReady;});//Wait for partial data to be ready
+		if (ts->dialog->allDataIsReady)
+		{
+			ts->dialog->dataPartIsReady = false;
+			ts->dialog->allDataIsReady = false;
+			ts->dialog->dataIsProcessed = false;
+			lock.unlock();
+			break;
+		}
+		int nextVal = ts->dialog->dataBuffer.get();
+		CString timeStr(std::to_string(nextVal).c_str());
 		ts->dialog->SetDlgItemTextW(LABEL2, timeStr);
-		Sleep(1000);
+		ts->dialog->dataIsProcessed = true;
+		ts->dialog->dataPartIsReady = false;
+		lock.unlock();
+		ts->dialog->cv.notify_one();
 	}
+
+
 	ts->dialog->SetDlgItemTextW(LABEL2, _T(""));
 
 	Pen greenPen(Color(0, 255, 0), 5.0);
@@ -167,7 +156,7 @@ UINT CReceiverDlg::DoSomethingElseInSeparateThread(LPVOID param)
 	return TRUE;
 }
 
-UINT CReceiverDlg::DoSomethingInSeparateThread(LPVOID param)
+UINT CReceiverDlg::StartProducer(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
 	CRect client;
@@ -187,10 +176,29 @@ UINT CReceiverDlg::DoSomethingInSeparateThread(LPVOID param)
 	ts->dialog->SetDlgItemTextW(LABEL1, _T("100"));
 	for (int i = 10; i > 0; i--) 
 	{
+		std::unique_lock<std::mutex> lock(ts->dialog->mu);
+		ts->dialog->dataBuffer.push(i);
 		CString timeStr(std::to_string(i).c_str());
 		ts->dialog->SetDlgItemTextW(LABEL1, timeStr);
 		Sleep(1000);
+		lock.unlock();
+		ts->dialog->dataPartIsReady = true;
+		ts->dialog->dataIsProcessed = false;
+		ts->dialog->cv.notify_one();
+		{
+			std::unique_lock<std::mutex> processedLock(ts->dialog->mu);
+			ts->dialog->dataIsProcessed;
+			ts->dialog->cv.wait(processedLock, [ts] {return ts->dialog->dataIsProcessed;});
+		}
 	}
+	std::unique_lock<std::mutex> lock(ts->dialog->mu);
+	ts->dialog->allDataIsReady = true;
+	ts->dialog->dataPartIsReady = true;
+	ts->dialog->dataIsProcessed = false;
+	lock.unlock();
+	ts->dialog->cv.notify_one();
+
+
 	ts->dialog->SetDlgItemTextW(LABEL1, _T(""));
 
 	Pen greenPen(Color(0, 255, 0), 5.0);
@@ -205,5 +213,5 @@ void CReceiverDlg::OnBnClickedBtn2()
 	THREADSTRUCT* param = new THREADSTRUCT;
 	param->dialog = this;
 	//running in a separate thread in order not to block the UI
-	AfxBeginThread(DoSomethingElseInSeparateThread, param);
+	AfxBeginThread(StartConsumer, param);
 }
