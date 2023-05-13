@@ -97,18 +97,40 @@ HCURSOR CReceiverDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
 void CReceiverDlg::OnBnClickedBtn1()
 {
 	THREADSTRUCT* param = new THREADSTRUCT;
 	param->dialog = this;
-	//running in a separate thread in order not to block the UI
-	AfxBeginThread(StartProducer, param);
+	AfxBeginThread(CaptureMouseTrack, param);
 
 }
 
-UINT CReceiverDlg::StartConsumer(LPVOID param)
+UINT CReceiverDlg::CaptureMouseTrack(LPVOID param)
+{
+	THREADSTRUCT* ts = (THREADSTRUCT*)param;
+	CRect client;
+	ts->dialog->GetClientRect(&client);
+	CWnd* btn = ts->dialog->GetDlgItem(ID_BTN1);
+	btn->EnableWindow(FALSE);
+	CDC* dc = ts->dialog->GetDC();
+	Graphics graphics(dc->m_hDC);
+	Pen redPen(Color(255, 0, 0), 5.0);
+
+	Rect rect(180, 25, 5, 5);
+	graphics.DrawArc(&redPen, rect, 0, 360);
+
+	set_track_time(5000);
+	std::vector<POINT> mouseData = mouse_track();
+
+	Pen greenPen(Color(0, 255, 0), 5.0);
+	graphics.DrawArc(&greenPen, rect, 0, 360);
+	ts->dialog->ReleaseDC(dc);
+	btn->EnableWindow(TRUE);
+	ts->dialog->mouseData = mouseData;
+	return TRUE;
+}
+
+UINT CReceiverDlg::DrawBackground(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
 	CRect client;
@@ -120,16 +142,13 @@ UINT CReceiverDlg::StartConsumer(LPVOID param)
 	Pen redPen(Color(255, 0, 0), 5.0);
 
 	Rect rect(400,25,5,5);
-	REAL startAngle = 0;
-	REAL sweepAngle = 360;
 	// Draw arc to screen.
-	graphics.DrawArc(&redPen, rect, startAngle, sweepAngle);
+	graphics.DrawArc(&redPen, rect, 0, 360);
 	Pen semiTransPen(Color(5, 0, 0, 255), 80);
 	POINT lastPoint;
 	lastPoint.x = -1;
 	while (true) 
 	{
-
 		std::unique_lock<std::mutex> lock(ts->dialog->mu);
 		ts->dialog->cv.wait(lock, [ts] {return ts->dialog->dataPartIsReady;});//Wait for partial data to be ready
 		if (ts->dialog->dataBuffer.getSize() == 0) {
@@ -157,7 +176,6 @@ UINT CReceiverDlg::StartConsumer(LPVOID param)
 			Point gdiTo;
 			gdiTo.X = to.x/2;
 			gdiTo.Y = to.y/2;
-			graphics.DrawLine(&redPen, gdiFrom, gdiTo);
 			Rect rect(to.x/2, to.y/2, 10, 10);
 			graphics.DrawArc(&semiTransPen, rect, 0, 360);
 			lastPoint = to;
@@ -168,18 +186,28 @@ UINT CReceiverDlg::StartConsumer(LPVOID param)
 		ts->dialog->cv.notify_one();
 	}
 
-	ts->dialog->SetDlgItemTextW(LABEL2, _T(""));
-
 	Pen greenPen(Color(0, 255, 0), 5.0);
-	graphics.DrawArc(&greenPen, rect, startAngle, sweepAngle);
+	graphics.DrawArc(&greenPen, rect, 0, 360);
 	ts->dialog->ReleaseDC(dc);
 	btn->EnableWindow(TRUE);
 
 	return TRUE;
 }
 
-
-UINT CReceiverDlg::StartProducer(LPVOID param)
+void CReceiverDlg::sendDataToBackgroundWaitUntilProcessed(POINT current)
+{
+	std::unique_lock<std::mutex> lock(mu);
+	dataBuffer.push(current);
+	lock.unlock();
+	dataPartIsReady = true;
+	dataIsProcessed = false;
+	cv.notify_one();
+	{
+		std::unique_lock<std::mutex> processedLock(mu);
+		cv.wait(processedLock, [this] {return dataIsProcessed;});
+	}
+}
+UINT CReceiverDlg::DrawMainTrack(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
 	CRect client;
@@ -189,42 +217,30 @@ UINT CReceiverDlg::StartProducer(LPVOID param)
 	CDC* dc = ts->dialog->GetDC();
 	Graphics graphics(dc->m_hDC);
 	Pen redPen(Color(255, 0, 0), 5.0);
-
 	Rect rect(180, 25, 5, 5);
 	graphics.DrawArc(&redPen, rect, 0, 360);
 
-	for (int i = 100; i > 0; i--) 
+	POINT lastPoint;
+	lastPoint.x = -1;
+	for (int i = 0; i < ts->dialog->mouseData.size(); i++)
 	{
-		std::unique_lock<std::mutex> lock(ts->dialog->mu);
-		POINT p;
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		Sleep(10);
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		Sleep(10);
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		Sleep(10);
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		Sleep(10);
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		Sleep(10);
-		GetCursorPos(&p);
-		ts->dialog->dataBuffer.push(p);
-		CString timeStr(std::to_string(i).c_str());
-		ts->dialog->SetDlgItemTextW(LABEL1, timeStr);
-		lock.unlock();
-		ts->dialog->dataPartIsReady = true;
-		ts->dialog->dataIsProcessed = false;
-		ts->dialog->cv.notify_one();
+		POINT current = ts->dialog->mouseData[i];
+		ts->dialog->sendDataToBackgroundWaitUntilProcessed(current);
+		if (lastPoint.x == -1)
 		{
-			std::unique_lock<std::mutex> processedLock(ts->dialog->mu);
-			ts->dialog->dataIsProcessed;
-			ts->dialog->cv.wait(processedLock, [ts] {return ts->dialog->dataIsProcessed;});
+			lastPoint = current;
+			continue;
 		}
+		POINT from = lastPoint;
+		POINT to = current;
+		Point gdiFrom;
+		gdiFrom.X = from.x / 2;
+		gdiFrom.Y = from.y / 2;
+		Point gdiTo;
+		gdiTo.X = to.x / 2;
+		gdiTo.Y = to.y / 2;
+		graphics.DrawLine(&redPen, gdiFrom, gdiTo);
+		lastPoint = to;
 	}
 	std::unique_lock<std::mutex> lock(ts->dialog->mu);
 	ts->dialog->dataPartIsReady = true;
@@ -232,10 +248,8 @@ UINT CReceiverDlg::StartProducer(LPVOID param)
 	ts->dialog->cv.notify_one();
 
 
-	ts->dialog->SetDlgItemTextW(LABEL1, _T(""));
-
 	Pen greenPen(Color(0, 255, 0), 5.0);
-	graphics.DrawArc(&greenPen, rect, startAngle, sweepAngle);
+	graphics.DrawArc(&greenPen, rect, 0, 360);
 	ts->dialog->ReleaseDC(dc);
 	btn->EnableWindow(TRUE);
 	return TRUE;
@@ -245,8 +259,9 @@ void CReceiverDlg::OnBnClickedBtn2()
 {
 	THREADSTRUCT* param = new THREADSTRUCT;
 	param->dialog = this;
-	//running in a separate thread in order not to block the UI
-	AfxBeginThread(StartConsumer, param);
+	AfxBeginThread(DrawMainTrack, param);
+	AfxBeginThread(DrawBackground, param);
+
 }
 
 

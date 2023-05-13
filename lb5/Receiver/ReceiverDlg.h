@@ -7,12 +7,15 @@
 #include <mutex>
 #include "Buffer.h"
 #include "Buffer.cpp" // hack in order to avoid linkage error (Method 2) https://www.codeproject.com/Articles/48575/How-to-Define-a-Template-Class-in-a-h-File-and-Imp
+#include "mylib.h"
+
 
 // CReceiverDlg dialog
 class CReceiverDlg : public CDialogEx
 {
-	static UINT StartProducer(LPVOID param);
-	static UINT StartConsumer(LPVOID param);
+	static UINT DrawMainTrack(LPVOID param);
+	static UINT DrawBackground(LPVOID param);
+	static UINT CaptureMouseTrack(LPVOID param);
 
 	typedef struct THREADSTRUCT
 	{
@@ -41,6 +44,9 @@ protected:
 	bool dataIsProcessed = false;
 	Buffer<POINT> dataBuffer;
 
+	std::vector<POINT> mouseData;
+
+	void sendDataToBackgroundWaitUntilProcessed(POINT point);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
