@@ -1,15 +1,18 @@
 
 // ReceiverDlg.h : header file
 //
-#include <string>
 #pragma once
-
+#include <string>
+#include <queue>
+#include <mutex>
+#include "Buffer.h"
+#include "Buffer.cpp" // hack in order to avoid linkage error (Method 2) https://www.codeproject.com/Articles/48575/How-to-Define-a-Template-Class-in-a-h-File-and-Imp
 
 // CReceiverDlg dialog
 class CReceiverDlg : public CDialogEx
 {
-	static UINT DoSomethingInSeparateThread(LPVOID param);
-	static UINT DoSomethingElseInSeparateThread(LPVOID param);
+	static UINT StartProducer(LPVOID param);
+	static UINT StartConsumer(LPVOID param);
 
 	typedef struct THREADSTRUCT
 	{
@@ -28,10 +31,15 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
-
 	// Implementation
 protected:
 	HICON m_hIcon;
+	std::mutex(mu); //Global variable or place within class
+	std::condition_variable cv;
+	bool dataPartIsReady = false;
+	bool allDataIsReady = false;
+	bool dataIsProcessed = false;
+	Buffer<int> dataBuffer;
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
