@@ -4,6 +4,7 @@
 
 #pragma once
 #include <vector> 
+#include <sstream>
 #include "MouseTrack.h"
 #include "SocketApi.h"
 #include <winsock2.h>
@@ -12,6 +13,8 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"

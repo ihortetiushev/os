@@ -21,6 +21,19 @@ const CString GREEN_COLOR_SETTING_KEY = _T("GREEN_COLOR");
 const CString BLUE_COLOR_SETTING_KEY = _T("BLUE_COLOR");
 const CString BRUSH_SIZE_SETTING_LEY = _T("BRUSH_SIZE");
 
+template<typename T>
+std::istream& deserialize(std::istream& is, std::vector<T>& v)
+{
+	static_assert(std::is_trivial<T>::value && std::is_standard_layout<T>::value,
+		"Can only deserialize POD types with this function");
+
+	decltype(v.size()) size;
+	is.read(reinterpret_cast<char*>(&size), sizeof(size));
+	v.resize(size);
+	is.read(reinterpret_cast<char*>(v.data()), v.size() * sizeof(T));
+	return is;
+}
+
 CReceiverDlg::CReceiverDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_RECEIVER_DIALOG, pParent)
 {
@@ -317,5 +330,131 @@ void CReceiverDlg::OnClose()
 
 void CReceiverDlg::OnBnClickedButton1()
 {
-	// TODO: Add your control notification handler code here
+	WSADATA wsaData;
+	int iResult;
+
+	SOCKET ListenSocket = INVALID_SOCKET;
+	SOCKET ClientSocket = INVALID_SOCKET;
+
+	struct addrinfo* result = NULL;
+	struct addrinfo hints;
+
+	int iSendResult;
+	char recvbuf[DEFAULT_BUFLEN];
+	int recvbuflen = DEFAULT_BUFLEN;
+
+	// Initialize Winsock
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		printf("WSAStartup failed with error: %d\n", iResult);
+		return;
+	}
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+
+	// Resolve the server address and port
+	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+	if (iResult != 0) {
+		printf("getaddrinfo failed with error: %d\n", iResult);
+		WSACleanup();
+		return;
+	}
+
+	// Create a SOCKET for the server to listen for client connections.
+	ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	if (ListenSocket == INVALID_SOCKET) {
+		printf("socket failed with error: %ld\n", WSAGetLastError());
+		freeaddrinfo(result);
+		WSACleanup();
+		return;
+	}
+
+	// Setup the TCP listening socket
+	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+	if (iResult == SOCKET_ERROR) {
+		printf("bind failed with error: %d\n", WSAGetLastError());
+		freeaddrinfo(result);
+		closesocket(ListenSocket);
+		WSACleanup();
+		return;
+	}
+
+	freeaddrinfo(result);
+
+	iResult = listen(ListenSocket, SOMAXCONN);
+	if (iResult == SOCKET_ERROR) {
+		printf("listen failed with error: %d\n", WSAGetLastError());
+		closesocket(ListenSocket);
+		WSACleanup();
+		return;
+	}
+
+	// Accept a client socket
+	ClientSocket = accept(ListenSocket, NULL, NULL);
+	if (ClientSocket == INVALID_SOCKET) {
+		printf("accept failed with error: %d\n", WSAGetLastError());
+		closesocket(ListenSocket);
+		WSACleanup();
+		return;
+	}
+
+	// No longer need server socket
+	closesocket(ListenSocket);
+
+	std::vector<POINT> received;
+	do {
+
+		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+		if (iResult > 0) {
+			printf("Bytes received: %d\n", iResult);
+			std::string singlePoint(recvbuf);
+			int idxX = singlePoint.find_first_of("|");
+			int idxY = singlePoint.find_first_of("#");
+			std::string xStr = singlePoint.substr(0, idxX);
+			std::string yStr = singlePoint.substr(idxX + 1, idxY - idxX - 1);
+			POINT current;
+			current.x = std::stoi(xStr);
+			current.y = std::stoi(yStr);
+			received.push_back(current);
+			//// Echo the buffer back to the sender
+			//iSendResult = send(ClientSocket, recvbuf, iResult, 0);
+			//if (iSendResult == SOCKET_ERROR) {
+			//	printf("send failed with error: %d\n", WSAGetLastError());
+			//	closesocket(ClientSocket);
+			//	WSACleanup();
+			//	return;
+			//}
+			//printf("Bytes sent: %d\n", iSendResult);
+		}
+		else if (iResult == 0)
+			printf("Connection closing...\n");
+		else {
+			printf("recv failed with error: %d\n", WSAGetLastError());
+			closesocket(ClientSocket);
+			WSACleanup();
+			return;
+		}
+
+	} while (iResult > 0);
+	mouseData = received;
+
+
+	// shutdown the connection since we're done
+	iResult = shutdown(ClientSocket, SD_SEND);
+	if (iResult == SOCKET_ERROR) {
+		printf("shutdown failed with error: %d\n", WSAGetLastError());
+		closesocket(ClientSocket);
+		WSACleanup();
+		return;
+	}
+
+	// cleanup
+	closesocket(ClientSocket);
+	WSACleanup();
+
+	return;
 }

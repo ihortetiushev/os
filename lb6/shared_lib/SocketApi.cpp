@@ -4,7 +4,9 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
-SocketApi::result SocketApi::DoDataTransfer()
+char* server = "127.0.0.1";
+
+SocketApi::result SocketApi::SetupConnection()
 {
 	SocketApi::result res;
 	struct addrinfo* result = NULL,
@@ -12,9 +14,8 @@ SocketApi::result SocketApi::DoDataTransfer()
 		hints;
 
 	WSADATA wsaData;
-	SOCKET connectSocket = INVALID_SOCKET;
+	res.connectSocket = INVALID_SOCKET;
 
-	char* server = "127.0.0.1";
 	// Initialize Winsock
 	res.resultCode = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (res.resultCode != 0)
@@ -37,19 +38,19 @@ SocketApi::result SocketApi::DoDataTransfer()
 	for (ptr = result; ptr != NULL;ptr = ptr->ai_next) {
 
 		// Create a SOCKET for connecting to server
-		connectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+		res.connectSocket = socket(ptr->ai_family, ptr->ai_socktype,
 			ptr->ai_protocol);
-		if (connectSocket == INVALID_SOCKET) {
+		if (res.connectSocket == INVALID_SOCKET) {
 			res.message = "socket failed with error";
 			res.resultCode = WSAGetLastError();
 			WSACleanup();
 			return res;
 		}
 		// Connect to server.
-		res.resultCode = connect(connectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		res.resultCode = connect(res.connectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
 		if (res.resultCode == SOCKET_ERROR) {
-			closesocket(connectSocket);
-			connectSocket = INVALID_SOCKET;
+			closesocket(res.connectSocket);
+			res.connectSocket = INVALID_SOCKET;
 			continue;
 		}
 		break;
@@ -57,14 +58,28 @@ SocketApi::result SocketApi::DoDataTransfer()
 
 	freeaddrinfo(result);
 
-	if (connectSocket == INVALID_SOCKET) {
+	if (res.connectSocket == INVALID_SOCKET) {
 		res.message = "Unable to connect to server";
 		res.resultCode = -1;
 		WSACleanup();
 		return res;
 	}
+	return res;
+}
 
-	WSACleanup();
+SocketApi::result SocketApi::CloseConnection()
+{
+	SocketApi::result res;
+	return res;
+}
+
+SocketApi::result SocketApi::DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data)
+{
+	SocketApi::result res;
+	res.connectSocket = connectSocket;
+
+
+
 	res.resultCode = 0;
 	return res;
 }

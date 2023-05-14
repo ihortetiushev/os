@@ -6,21 +6,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
+#pragma comment (lib, "msvcprt.lib")
+
+
+
 class SocketApi
 {
 
 public:
-	__declspec(dllexport) struct result
+	struct result
 	{
 		int resultCode;
 		std::string message;
+		SOCKET connectSocket;
 	};
-	__declspec(dllexport) result DoDataTransfer();
-
+	__declspec(dllexport) result SetupConnection();
+	__declspec(dllexport) result CloseConnection();
+	__declspec(dllexport) result DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data);
 
 };

@@ -15,21 +15,20 @@
 #endif
 
 // CAboutDlg dialog used for App About
-
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// Dialog Data
+	// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-// Implementation
+	// Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -113,7 +112,7 @@ BOOL CRunnerDlg::SaveSettingsToRegistry()
 	GetDlgItemText(TRACKING_TIME_INPUT, trackingTimeStr);
 	CString trackingResolutionStr;
 	GetDlgItemText(TRACKING_RESOLUTION_INPUT, trackingResolutionStr);
- 	int trackingTime = _ttoi(trackingTimeStr);
+	int trackingTime = _ttoi(trackingTimeStr);
 	int trackingResilution = _ttoi(trackingResolutionStr);
 
 	if (trackingTime == 0 || trackingResilution == 0)
@@ -239,7 +238,7 @@ UINT CRunnerDlg::TrackMouse(LPVOID param)
 	return TRUE;
 }
 
-static CString toCString(int value) 
+static CString toCString(int value)
 {
 	CString str(std::to_string(value).c_str());
 	return str;
@@ -257,12 +256,12 @@ void CRunnerDlg::DoDataTransfer()
 	SetDlgItemText(STATUS_LABEL, _T("Transfering data..."));
 	//implement actual data transfer
 
-	/*SocketApi::result transferResult = socketApi.DoDataTransfer();
+	SocketApi::result transferResult = socketApi.DoDataTransfer();
 	if (transferResult.resultCode != 0)
 	{
 		AfxMessageBox(toCString(transferResult.message) + ". Error: " + toCString(transferResult.resultCode));
-	}*/
-		
+	}
+
 	struct addrinfo* result = NULL,
 		* ptr = NULL,
 		hints;
@@ -319,6 +318,34 @@ void CRunnerDlg::DoDataTransfer()
 		return;
 	}
 
+	// Send an initial buffer
+	for (int i = 0;i < points.size();i++)
+	{
+		//std::string str(oss.str());
+		std::string singlePoint = std::to_string(points[i].x) + "|" + std::to_string(points[i].y) + "#";
+		//std::string singlePoint = std::to_string(10) + "|" + std::to_string(123456) + "#";
+		const char* sendbuf = singlePoint.c_str();
+		res = send(connectSocket, sendbuf, (int)strlen(sendbuf), 0);
+		if (res == SOCKET_ERROR) {
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(connectSocket);
+			WSACleanup();
+			return;
+		}
+	}
+
+	res = shutdown(connectSocket, SD_SEND);
+	if (res == SOCKET_ERROR) {
+		printf("shutdown failed with error: %d\n", WSAGetLastError());
+		closesocket(connectSocket);
+		WSACleanup();
+		return;
+	}
+
+	closesocket(connectSocket);
+	WSACleanup();
+
+
 	SetDlgItemTextW(STATUS_LABEL, _T("Transer is completed"));
 	Sleep(3000);
 	SetDlgItemTextW(STATUS_LABEL, _T("Waiting for user input"));
@@ -326,7 +353,7 @@ void CRunnerDlg::DoDataTransfer()
 
 void CRunnerDlg::StartCapture()
 {
-	if (captureInProgress) 
+	if (captureInProgress)
 	{
 		//already in progress
 		//silently do nothing
