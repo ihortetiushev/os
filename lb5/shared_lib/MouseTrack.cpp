@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "mylib.h"
+#include "MouseTrack.h"
 #include <chrono>
 #include <thread>
 
@@ -7,7 +7,7 @@
 int total_track_time = 60000; //by default 60000 ms = 1 min
 int delay_between_points = 20; //by default 20ms
 
-std::vector<POINT> mouse_track()
+std::vector<POINT> MouseTrack::DoMouseTrack()
 {
 	std::vector<POINT> points;
 	
@@ -29,12 +29,13 @@ std::vector<POINT> mouse_track()
 	return points;
 }
 
-void set_track_time(int time_in_milliseconds) 
+void MouseTrack::SetTrackingTime(int time_in_milliseconds)
 {
 	total_track_time = time_in_milliseconds;
 }
 
-void set_measurement_resolution(int delay_in_milliseconds)
+void MouseTrack::SetMeasurementResolution(int delay_in_milliseconds)
 {
 	delay_between_points = delay_in_milliseconds;
 }
+

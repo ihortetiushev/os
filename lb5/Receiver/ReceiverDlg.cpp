@@ -14,8 +14,13 @@
 
 
 // CReceiverDlg dialog
-
-
+const int TOP_OFFSET = 150;
+const float SCALE = 0.5;
+const CString APP_NAME = _T("Receiver");
+const CString RED_COLOR_SETTING_KEY = _T("RED_COLOR");
+const CString GREEN_COLOR_SETTING_KEY = _T("GREEN_COLOR");
+const CString BLUE_COLOR_SETTING_KEY = _T("BLUE_COLOR");
+const CString BRUSH_SIZE_SETTING_LEY = _T("BRUSH_SIZE");
 
 CReceiverDlg::CReceiverDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_RECEIVER_DIALOG, pParent)
@@ -34,10 +39,9 @@ BEGIN_MESSAGE_MAP(CReceiverDlg, CDialogEx)
 	ON_BN_CLICKED(ID_BTN1, &CReceiverDlg::OnBnClickedBtn1)
 	ON_BN_CLICKED(ID_BTN2, &CReceiverDlg::OnBnClickedBtn2)
 	ON_BN_CLICKED(BUTTON_CLEAR, &CReceiverDlg::OnBnClickedClear)
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-
-// CReceiverDlg message handlers
 
 BOOL CReceiverDlg::OnInitDialog()
 {
@@ -48,7 +52,11 @@ BOOL CReceiverDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
+
+	ReadSettingsFromRegistry();
+
+
+	//make dialog full screen size
 	CRect rcDesktop;
 	rcDesktop.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
 	rcDesktop.right = rcDesktop.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -119,8 +127,8 @@ UINT CReceiverDlg::CaptureMouseTrack(LPVOID param)
 	Rect rect(180, 25, 5, 5);
 	graphics.DrawArc(&redPen, rect, 0, 360);
 
-	set_track_time(5000);
-	std::vector<POINT> mouseData = mouse_track();
+	ts->dialog->mouseTrack.SetTrackingTime(5000);
+	std::vector<POINT> mouseData = ts->dialog->mouseTrack.DoMouseTrack();
 
 	Pen greenPen(Color(0, 255, 0), 5.0);
 	graphics.DrawArc(&greenPen, rect, 0, 360);
@@ -128,6 +136,14 @@ UINT CReceiverDlg::CaptureMouseTrack(LPVOID param)
 	btn->EnableWindow(TRUE);
 	ts->dialog->mouseData = mouseData;
 	return TRUE;
+}
+
+Point convertToPoint(POINT fromPoint) 
+{
+	Point gdiPoint;
+	gdiPoint.X = (INT)(fromPoint.x * SCALE);
+	gdiPoint.Y = (INT)(fromPoint.y * SCALE) + TOP_OFFSET; //in order not to overlap witht the controls
+	return gdiPoint;
 }
 
 UINT CReceiverDlg::DrawBackground(LPVOID param)
@@ -144,9 +160,9 @@ UINT CReceiverDlg::DrawBackground(LPVOID param)
 	Rect rect(400,25,5,5);
 	// Draw arc to screen.
 	graphics.DrawArc(&redPen, rect, 0, 360);
-	Pen semiTransPen(Color(5, 0, 0, 255), 80);
-	POINT lastPoint;
-	lastPoint.x = -1;
+	int mainSize = ts->dialog->getEditControlIntValue(EDIT_SIZE);
+	int size = mainSize * 15; //15 time more that main brush size
+	Pen semiTransPen(Color(5, 0, 0, 255), size);
 	while (true) 
 	{
 		std::unique_lock<std::mutex> lock(ts->dialog->mu);
@@ -163,23 +179,12 @@ UINT CReceiverDlg::DrawBackground(LPVOID param)
 		std::vector<POINT> nextDataBulk = ts->dialog->dataBuffer.getAll();
 		for (int i=0; i< nextDataBulk.size(); i++)
 		{
-			if (lastPoint.x == -1) 
-			{
-				lastPoint = nextDataBulk[i];
-				continue;
-			}
-			POINT from = lastPoint;
-			POINT to = nextDataBulk[i];
-			Point gdiFrom;
-			gdiFrom.X = from.x/2;
-			gdiFrom.Y = from.y/2;
-			Point gdiTo;
-			gdiTo.X = to.x/2;
-			gdiTo.Y = to.y/2;
-			Rect rect(to.x/2, to.y/2, 10, 10);
+			POINT point = nextDataBulk[i];
+			Point gdiPoint = convertToPoint(point);
+			Rect rect(gdiPoint.X, gdiPoint.Y, 10, 10);
 			graphics.DrawArc(&semiTransPen, rect, 0, 360);
-			lastPoint = to;
 		}
+
 		ts->dialog->dataIsProcessed = true;
 		ts->dialog->dataPartIsReady = false;
 		lock.unlock();
@@ -217,6 +222,12 @@ UINT CReceiverDlg::DrawMainTrack(LPVOID param)
 	CDC* dc = ts->dialog->GetDC();
 	Graphics graphics(dc->m_hDC);
 	Pen redPen(Color(255, 0, 0), 5.0);
+	int red = ts->dialog->getEditControlIntValue(EDIT_RED);
+	int green = ts->dialog->getEditControlIntValue(EDIT_GREEN);
+	int blue = ts->dialog->getEditControlIntValue(EDIT_BLUE);
+	int penSize = ts->dialog->getEditControlIntValue(EDIT_SIZE);
+	Pen pen(Color(red, green, blue), penSize);
+
 	Rect rect(180, 25, 5, 5);
 	graphics.DrawArc(&redPen, rect, 0, 360);
 
@@ -233,13 +244,7 @@ UINT CReceiverDlg::DrawMainTrack(LPVOID param)
 		}
 		POINT from = lastPoint;
 		POINT to = current;
-		Point gdiFrom;
-		gdiFrom.X = from.x / 2;
-		gdiFrom.Y = from.y / 2;
-		Point gdiTo;
-		gdiTo.X = to.x / 2;
-		gdiTo.Y = to.y / 2;
-		graphics.DrawLine(&redPen, gdiFrom, gdiTo);
+		graphics.DrawLine(&pen, convertToPoint(from), convertToPoint(to));
 		lastPoint = to;
 	}
 	std::unique_lock<std::mutex> lock(ts->dialog->mu);
@@ -264,10 +269,52 @@ void CReceiverDlg::OnBnClickedBtn2()
 
 }
 
-
 void CReceiverDlg::OnBnClickedClear()
 {
 	//redraw dialog with clearing all the drawings if exits
 	Invalidate();
 	UpdateWindow();
+}
+
+void CReceiverDlg::ReadSettingsFromRegistry()
+{
+	CWinApp* pApp = AfxGetApp();
+	int redColor = pApp->GetProfileInt(APP_NAME, RED_COLOR_SETTING_KEY, 0);
+	CString redCorolStr(std::to_string(redColor).c_str());
+	SetDlgItemText(EDIT_RED, redCorolStr);
+
+	int greenColor = pApp->GetProfileInt(APP_NAME, GREEN_COLOR_SETTING_KEY, 0);
+	CString greenColorStr(std::to_string(greenColor).c_str());
+	SetDlgItemText(EDIT_GREEN, greenColorStr);
+
+	int blueColor = pApp->GetProfileInt(APP_NAME, BLUE_COLOR_SETTING_KEY, 255);
+	CString blueColorStr(std::to_string(blueColor).c_str());
+	SetDlgItemText(EDIT_BLUE, blueColorStr);
+
+	int brushSize = pApp->GetProfileInt(APP_NAME, BRUSH_SIZE_SETTING_LEY, 5);
+	CString brushSizeStr(std::to_string(brushSize).c_str());
+	SetDlgItemText(EDIT_SIZE, brushSizeStr);
+}
+
+int CReceiverDlg::getEditControlIntValue(int controlId)
+{
+	CString strValue;
+	GetDlgItemText(controlId, strValue);
+	return _ttoi(strValue);
+}
+
+BOOL CReceiverDlg::SaveSettingsToRegistry()
+{
+	CWinApp* pApp = AfxGetApp();
+	pApp->WriteProfileInt(APP_NAME, RED_COLOR_SETTING_KEY, getEditControlIntValue(EDIT_RED));
+	pApp->WriteProfileInt(APP_NAME, GREEN_COLOR_SETTING_KEY, getEditControlIntValue(EDIT_GREEN));
+	pApp->WriteProfileInt(APP_NAME, BLUE_COLOR_SETTING_KEY, getEditControlIntValue(EDIT_BLUE));
+	pApp->WriteProfileInt(APP_NAME, BRUSH_SIZE_SETTING_LEY, getEditControlIntValue(EDIT_SIZE));
+	return TRUE;
+}
+
+void CReceiverDlg::OnClose()
+{
+	SaveSettingsToRegistry();
+	CDialogEx::OnClose();
 }

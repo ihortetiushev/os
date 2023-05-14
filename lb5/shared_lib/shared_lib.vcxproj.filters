@@ -27,7 +27,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mylib.h">
+    <ClInclude Include="MouseTrack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,7 +41,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mylib.cpp">
+    <ClCompile Include="MouseTrack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
