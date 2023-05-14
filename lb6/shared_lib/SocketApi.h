@@ -27,7 +27,7 @@ public:
 		SOCKET connectSocket;
 	};
 	__declspec(dllexport) result SetupConnection();
-	__declspec(dllexport) result CloseConnection();
+	__declspec(dllexport) void CloseConnection(SOCKET connectSocket);
 	__declspec(dllexport) result DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data);
 
 };

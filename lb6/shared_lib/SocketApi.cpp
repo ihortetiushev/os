@@ -67,19 +67,40 @@ SocketApi::result SocketApi::SetupConnection()
 	return res;
 }
 
-SocketApi::result SocketApi::CloseConnection()
+void SocketApi::CloseConnection(SOCKET connectSocket)
 {
-	SocketApi::result res;
-	return res;
+	closesocket(connectSocket);
+	WSACleanup();
 }
 
 SocketApi::result SocketApi::DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data)
 {
 	SocketApi::result res;
 	res.connectSocket = connectSocket;
-
-
-
+	int resCode;
+	// Send data
+	for (int i = 0;i < data.size();i++)
+	{
+		//std::string str(oss.str());
+		std::string singlePoint = std::to_string(data[i].x) + "|" + std::to_string(data[i].y) + "#";
+		const char* sendbuf = singlePoint.c_str();
+		resCode = send(res.connectSocket, sendbuf, (int)strlen(sendbuf), 0);
+		if (resCode == SOCKET_ERROR) {
+			res.message = "send failed with error";
+			res.resultCode = WSAGetLastError();
+			closesocket(res.connectSocket);
+			WSACleanup();
+			return res;
+		}
+	}
+	resCode = shutdown(res.connectSocket, SD_SEND);
+	if (resCode == SOCKET_ERROR) {
+		res.message = "shutdown failed with error";
+		res.resultCode = WSAGetLastError();
+		closesocket(res.connectSocket);
+		WSACleanup();
+		return res;
+	}
 	res.resultCode = 0;
 	return res;
 }

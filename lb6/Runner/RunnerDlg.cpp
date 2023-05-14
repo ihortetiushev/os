@@ -254,97 +254,23 @@ void CRunnerDlg::DoDataTransfer()
 {
 	//for now only changing label on UI
 	SetDlgItemText(STATUS_LABEL, _T("Transfering data..."));
-	//implement actual data transfer
 
-	SocketApi::result transferResult = socketApi.DoDataTransfer();
-	if (transferResult.resultCode != 0)
+	SocketApi::result opResult = socketApi.SetupConnection();
+	if (opResult.resultCode != 0)
 	{
-		AfxMessageBox(toCString(transferResult.message) + ". Error: " + toCString(transferResult.resultCode));
+		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
+		return;
 	}
 
-	struct addrinfo* result = NULL,
-		* ptr = NULL,
-		hints;
-
-	int res;
-	WSADATA wsaData;
-	SOCKET connectSocket = INVALID_SOCKET;
-
-	char* server = "127.0.0.1";
-	// Initialize Winsock
-	res = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (res != 0)
+	opResult = socketApi.DoDataTransfer(opResult.connectSocket, points);
+	if (opResult.resultCode != 0)
 	{
-		AfxMessageBox(_T("Failed to load Winsock library!. Error: ") + toCString(res));
-		return;
-	}
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	// Resolve the server address and port
-	res = getaddrinfo(server, DEFAULT_PORT, &hints, &result);
-	if (res != 0) {
-		AfxMessageBox(_T("getaddrinfo failed with error: ") + toCString(res));
-		WSACleanup();
-		return;
-	}
-	// Attempt to connect to an address until one succeeds
-	for (ptr = result; ptr != NULL;ptr = ptr->ai_next) {
-
-		// Create a SOCKET for connecting to server
-		connectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-			ptr->ai_protocol);
-		if (connectSocket == INVALID_SOCKET) {
-			AfxMessageBox(_T("socket failed with error:") + toCString(WSAGetLastError()));
-			WSACleanup();
-			return;
-		}
-		// Connect to server.
-		res = connect(connectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (res == SOCKET_ERROR) {
-			closesocket(connectSocket);
-			connectSocket = INVALID_SOCKET;
-			continue;
-		}
-		break;
-	}
-
-	freeaddrinfo(result);
-
-	if (connectSocket == INVALID_SOCKET) {
-		printf("Unable to connect to server!\n");
-		WSACleanup();
+		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
+		socketApi.CloseConnection(opResult.connectSocket);
 		return;
 	}
 
-	// Send an initial buffer
-	for (int i = 0;i < points.size();i++)
-	{
-		//std::string str(oss.str());
-		std::string singlePoint = std::to_string(points[i].x) + "|" + std::to_string(points[i].y) + "#";
-		//std::string singlePoint = std::to_string(10) + "|" + std::to_string(123456) + "#";
-		const char* sendbuf = singlePoint.c_str();
-		res = send(connectSocket, sendbuf, (int)strlen(sendbuf), 0);
-		if (res == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(connectSocket);
-			WSACleanup();
-			return;
-		}
-	}
-
-	res = shutdown(connectSocket, SD_SEND);
-	if (res == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(connectSocket);
-		WSACleanup();
-		return;
-	}
-
-	closesocket(connectSocket);
-	WSACleanup();
-
+	socketApi.CloseConnection(opResult.connectSocket);
 
 	SetDlgItemTextW(STATUS_LABEL, _T("Transer is completed"));
 	Sleep(3000);
