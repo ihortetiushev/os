@@ -252,6 +252,11 @@ static CString toCString(std::string value)
 
 void CRunnerDlg::DoDataTransfer()
 {
+	if (points.size() == 0) 
+	{
+		AfxMessageBox(_T("No data to transfer"));
+		return;
+	}
 	//for now only changing label on UI
 	SetDlgItemText(STATUS_LABEL, _T("Transfering data..."));
 
@@ -259,6 +264,7 @@ void CRunnerDlg::DoDataTransfer()
 	if (opResult.resultCode != 0)
 	{
 		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
+		SetDlgItemTextW(STATUS_LABEL, _T("Waiting for user input"));
 		return;
 	}
 
@@ -266,6 +272,7 @@ void CRunnerDlg::DoDataTransfer()
 	if (opResult.resultCode != 0)
 	{
 		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
+		SetDlgItemTextW(STATUS_LABEL, _T("Waiting for user input"));
 		socketApi.CloseConnection(opResult.connectSocket);
 		return;
 	}

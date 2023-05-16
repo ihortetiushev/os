@@ -81,7 +81,6 @@ SocketApi::result SocketApi::DoDataTransfer(SOCKET connectSocket, std::vector<PO
 	// Send data
 	for (int i = 0;i < data.size();i++)
 	{
-		//std::string str(oss.str());
 		std::string singlePoint = std::to_string(data[i].x) + "|" + std::to_string(data[i].y) + "#";
 		const char* sendbuf = singlePoint.c_str();
 		resCode = send(res.connectSocket, sendbuf, (int)strlen(sendbuf), 0);

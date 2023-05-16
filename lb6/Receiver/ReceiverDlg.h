@@ -16,6 +16,8 @@ class CReceiverDlg : public CDialogEx
 	static UINT DrawMainTrack(LPVOID param);
 	static UINT DrawBackground(LPVOID param);
 	static UINT CaptureMouseTrack(LPVOID param);
+	static UINT SetupServerSocket(LPVOID param);
+	static UINT ReceiveData(LPVOID param);
 
 
 	typedef struct THREADSTRUCT
@@ -47,11 +49,14 @@ protected:
 	MouseTrack mouseTrack;
 
 	std::vector<POINT> mouseData;
+	SOCKET serverSocket = INVALID_SOCKET;
+	SOCKET listenSocket = INVALID_SOCKET;
 
 	void sendDataToBackgroundWaitUntilProcessed(POINT point);
 	void ReadSettingsFromRegistry();
 	BOOL SaveSettingsToRegistry();
-	int getEditControlIntValue(int controlId);
+	int GetEditControlIntValue(int controlId);
+	void CloseConnection();
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
@@ -65,4 +70,6 @@ public:
 	afx_msg void OnBnClickedClear();
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton3();
 };
