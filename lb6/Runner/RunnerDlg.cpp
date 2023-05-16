@@ -260,7 +260,7 @@ void CRunnerDlg::DoDataTransfer()
 	//for now only changing label on UI
 	SetDlgItemText(STATUS_LABEL, _T("Transfering data..."));
 
-	SocketApi::result opResult = socketApi.SetupConnection();
+	ClientSocket::result opResult = clientSocket.SetupConnection();
 	if (opResult.resultCode != 0)
 	{
 		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
@@ -268,16 +268,16 @@ void CRunnerDlg::DoDataTransfer()
 		return;
 	}
 
-	opResult = socketApi.DoDataTransfer(opResult.connectSocket, points);
+	opResult = clientSocket.DoDataTransfer(opResult.connectSocket, points);
 	if (opResult.resultCode != 0)
 	{
 		AfxMessageBox(toCString(opResult.message) + ". Error: " + toCString(opResult.resultCode));
 		SetDlgItemTextW(STATUS_LABEL, _T("Waiting for user input"));
-		socketApi.CloseConnection(opResult.connectSocket);
+		clientSocket.CloseConnection(opResult.connectSocket);
 		return;
 	}
 
-	socketApi.CloseConnection(opResult.connectSocket);
+	clientSocket.CloseConnection(opResult.connectSocket);
 
 	SetDlgItemTextW(STATUS_LABEL, _T("Transer is completed"));
 	Sleep(3000);

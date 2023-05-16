@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "Buffer.cpp" // hack in order to avoid linkage error (Method 2) https://www.codeproject.com/Articles/48575/How-to-Define-a-Template-Class-in-a-h-File-and-Imp
 #include "MouseTrack.h"
+#include "ServerSocket.h"
 
 
 // CReceiverDlg dialog
@@ -47,12 +48,11 @@ protected:
 	bool dataIsProcessed = false;
 	Buffer<POINT> dataBuffer;
 	MouseTrack mouseTrack;
+	ServerSocket serverSocket;
 
 	std::vector<POINT> mouseData;
-	SOCKET serverSocket = INVALID_SOCKET;
-	SOCKET listenSocket = INVALID_SOCKET;
 
-	void sendDataToBackgroundWaitUntilProcessed(POINT point);
+	void SendDataToBackgroundWaitUntilProcessed(POINT point);
 	void ReadSettingsFromRegistry();
 	BOOL SaveSettingsToRegistry();
 	int GetEditControlIntValue(int controlId);

@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "SocketApi.h"
+#include "ClientSocket.h"
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
 char* server = "127.0.0.1";
 
-SocketApi::result SocketApi::SetupConnection()
+ClientSocket::result ClientSocket::SetupConnection()
 {
-	SocketApi::result res;
+	ClientSocket::result res;
 	struct addrinfo* result = NULL,
 		* ptr = NULL,
 		hints;
@@ -67,15 +67,15 @@ SocketApi::result SocketApi::SetupConnection()
 	return res;
 }
 
-void SocketApi::CloseConnection(SOCKET connectSocket)
+void ClientSocket::CloseConnection(SOCKET connectSocket)
 {
 	closesocket(connectSocket);
 	WSACleanup();
 }
 
-SocketApi::result SocketApi::DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data)
+ClientSocket::result ClientSocket::DoDataTransfer(SOCKET connectSocket, std::vector<POINT> data)
 {
-	SocketApi::result res;
+	ClientSocket::result res;
 	res.connectSocket = connectSocket;
 	int resCode;
 	// Send data

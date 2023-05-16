@@ -105,53 +105,15 @@ HCURSOR CReceiverDlg::OnQueryDragIcon()
 UINT CReceiverDlg::ReceiveData(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
-	int iResult;
-	// Accept a client socket
-	ts->dialog->serverSocket = accept(ts->dialog->listenSocket, NULL, NULL);
-	if (ts->dialog->serverSocket == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
-		closesocket(ts->dialog->listenSocket);
-		WSACleanup();
-		return FALSE;
-	}
-
-	char recvbuf[DEFAULT_BUFLEN];
-	int recvbuflen = DEFAULT_BUFLEN;
-	std::vector<POINT> received;
-	do {
-
-		iResult = recv(ts->dialog->serverSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0) {
-			printf("Bytes received: %d\n", iResult);
-			std::string singlePoint(recvbuf);
-			int idxX = singlePoint.find_first_of("|");
-			int idxY = singlePoint.find_first_of("#");
-			std::string xStr = singlePoint.substr(0, idxX);
-			std::string yStr = singlePoint.substr(idxX + 1, idxY - idxX - 1);
-			POINT current;
-			current.x = std::stoi(xStr);
-			current.y = std::stoi(yStr);
-			received.push_back(current);
-		}
-		else if (iResult == 0)
-			printf("Connection closing...\n");
-		else {
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(ts->dialog->serverSocket);
-			WSACleanup();
-			return FALSE;
-		}
-
-	} while (iResult > 0);
-
-	if (received.size() > 0) 
+	ServerSocket::readResult res = ts->dialog->serverSocket.ReceiveData();
+	if (res.resultCode == 0) 
 	{
 		CWnd* brawButton = ts->dialog->GetDlgItem(BUTTON_DRAW);
 		brawButton->EnableWindow(TRUE);
-		ts->dialog->mouseData = received;
+		ts->dialog->mouseData = res.data;
 		ts->dialog->StartDrawing();
 	}
-	
+
 	//after data receiving get ready for getting new data again
 	AfxBeginThread(ReceiveData, param);
 	return TRUE;
@@ -161,108 +123,11 @@ UINT CReceiverDlg::SetupServerSocket(LPVOID param)
 {
 	THREADSTRUCT* ts = (THREADSTRUCT*)param;
 
-	WSADATA wsaData;
-	int iResult;
-
-	struct addrinfo* result = NULL;
-	struct addrinfo hints;
-
-	char recvbuf[DEFAULT_BUFLEN];
-	int recvbuflen = DEFAULT_BUFLEN;
-
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
+	ServerSocket::result res = ts->dialog->serverSocket.SetupConnection();
+	if (res.resultCode != 0) 
+	{
 		return FALSE;
 	}
-
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-
-	// Resolve the server address and port
-	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-	if (iResult != 0) {
-		printf("getaddrinfo failed with error: %d\n", iResult);
-		WSACleanup();
-		return FALSE;
-	}
-
-	// Create a SOCKET for the server to listen for client connections.
-	ts->dialog->listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if (ts->dialog->listenSocket == INVALID_SOCKET) {
-		printf("socket failed with error: %ld\n", WSAGetLastError());
-		freeaddrinfo(result);
-		WSACleanup();
-		return FALSE;
-	}
-
-	// Setup the TCP listening socket
-	iResult = bind(ts->dialog->listenSocket, result->ai_addr, (int)result->ai_addrlen);
-	if (iResult == SOCKET_ERROR) {
-		printf("bind failed with error: %d\n", WSAGetLastError());
-		freeaddrinfo(result);
-		closesocket(ts->dialog->listenSocket);
-		WSACleanup();
-		return FALSE;
-	}
-
-	freeaddrinfo(result);
-
-	iResult = listen(ts->dialog->listenSocket, SOMAXCONN);
-	if (iResult == SOCKET_ERROR) {
-		printf("listen failed with error: %d\n", WSAGetLastError());
-		closesocket(ts->dialog->listenSocket);
-		WSACleanup();
-		return FALSE;
-	}
-
-	// Accept a client socket
-	/*ts->dialog->serverSocket = accept(ts->dialog->ListenSocket, NULL, NULL);
-	if (ts->dialog->serverSocket == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
-		closesocket(ts->dialog->ListenSocket);
-		WSACleanup();
-		return FALSE;
-	}*/
-
-	// No longer need server socket
-	//closesocket(ListenSocket);
-
-	//int iResult;
-	//char recvbuf[DEFAULT_BUFLEN];
-	//int recvbuflen = DEFAULT_BUFLEN;
-	/*
-	std::vector<POINT> received;
-	do {
-
-		iResult = recv(ts->dialog->serverSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0) {
-			printf("Bytes received: %d\n", iResult);
-			std::string singlePoint(recvbuf);
-			int idxX = singlePoint.find_first_of("|");
-			int idxY = singlePoint.find_first_of("#");
-			std::string xStr = singlePoint.substr(0, idxX);
-			std::string yStr = singlePoint.substr(idxX + 1, idxY - idxX - 1);
-			POINT current;
-			current.x = std::stoi(xStr);
-			current.y = std::stoi(yStr);
-			received.push_back(current);
-		}
-		else if (iResult == 0)
-			printf("Connection closing...\n");
-		else {
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(ts->dialog->serverSocket);
-			WSACleanup();
-			return FALSE;
-		}
-
-	} while (iResult > 0);
-	ts->dialog->mouseData = received;*/
 
 	AfxBeginThread(ReceiveData, param);
 
@@ -347,7 +212,7 @@ UINT CReceiverDlg::DrawBackground(LPVOID param)
 	return TRUE;
 }
 
-void CReceiverDlg::sendDataToBackgroundWaitUntilProcessed(POINT current)
+void CReceiverDlg::SendDataToBackgroundWaitUntilProcessed(POINT current)
 {
 	std::unique_lock<std::mutex> lock(mu);
 	dataBuffer.push(current);
@@ -379,7 +244,7 @@ UINT CReceiverDlg::DrawMainTrack(LPVOID param)
 	for (int i = 0; i < ts->dialog->mouseData.size(); i++)
 	{
 		POINT current = ts->dialog->mouseData[i];
-		ts->dialog->sendDataToBackgroundWaitUntilProcessed(current);
+		ts->dialog->SendDataToBackgroundWaitUntilProcessed(current);
 		if (lastPoint.x == -1)
 		{
 			lastPoint = current;
@@ -465,19 +330,5 @@ void CReceiverDlg::OnClose()
 
 void CReceiverDlg::CloseConnection() 
 {
-	int iResult;
-	closesocket(listenSocket);
-
-	// shutdown the connection since we're done
-	iResult = shutdown(serverSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(serverSocket);
-		WSACleanup();
-		return;
-	}
-
-	// cleanup
-	closesocket(serverSocket);
-	WSACleanup();
+	serverSocket.CloseConnection();
 }

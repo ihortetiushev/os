@@ -6,7 +6,7 @@
 #include <vector> 
 #include <sstream>
 #include "MouseTrack.h"
-#include "SocketApi.h"
+#include "ClientSocket.h"
 #include <winsock2.h>
 
 #include <windows.h>
@@ -54,7 +54,7 @@ protected:
 	std::vector<POINT> points;
 	BOOL captureInProgress = FALSE;
 	MouseTrack mouseTracker;
-	SocketApi socketApi;
+	ClientSocket clientSocket;
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	LRESULT OnHotKey(WPARAM wParam, LPARAM lParam);

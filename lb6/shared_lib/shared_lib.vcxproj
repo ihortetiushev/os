@@ -162,8 +162,9 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="MouseTrack.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="shared_lib.h" />
-    <ClInclude Include="SocketApi.h" />
+    <ClInclude Include="ClientSocket.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -174,8 +175,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="shared_lib.cpp" />
-    <ClCompile Include="SocketApi.cpp" />
+    <ClCompile Include="ClientSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
