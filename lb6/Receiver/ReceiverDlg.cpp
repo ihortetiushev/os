@@ -134,31 +134,6 @@ UINT CReceiverDlg::SetupServerSocket(LPVOID param)
 	return TRUE;
 }
 
-UINT CReceiverDlg::CaptureMouseTrack(LPVOID param)
-{
-	THREADSTRUCT* ts = (THREADSTRUCT*)param;
-	CRect client;
-	ts->dialog->GetClientRect(&client);
-	CWnd* btn = ts->dialog->GetDlgItem(ID_BTN1);
-	btn->EnableWindow(FALSE);
-	CDC* dc = ts->dialog->GetDC();
-	Graphics graphics(dc->m_hDC);
-	Pen redPen(Color(255, 0, 0), 5.0);
-
-	Rect rect(180, 25, 5, 5);
-	graphics.DrawArc(&redPen, rect, 0, 360);
-
-	ts->dialog->mouseTrack.SetTrackingTime(5000);
-	std::vector<POINT> mouseData = ts->dialog->mouseTrack.DoMouseTrack();
-
-	Pen greenPen(Color(0, 255, 0), 5.0);
-	graphics.DrawArc(&greenPen, rect, 0, 360);
-	ts->dialog->ReleaseDC(dc);
-	btn->EnableWindow(TRUE);
-	ts->dialog->mouseData = mouseData;
-	return TRUE;
-}
-
 Point convertToPoint(POINT fromPoint) 
 {
 	Point gdiPoint;

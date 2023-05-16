@@ -7,7 +7,6 @@
 #include <mutex>
 #include "Buffer.h"
 #include "Buffer.cpp" // hack in order to avoid linkage error (Method 2) https://www.codeproject.com/Articles/48575/How-to-Define-a-Template-Class-in-a-h-File-and-Imp
-#include "MouseTrack.h"
 #include "ServerSocket.h"
 
 
@@ -47,7 +46,6 @@ protected:
 	bool dataPartIsReady = false;
 	bool dataIsProcessed = false;
 	Buffer<POINT> dataBuffer;
-	MouseTrack mouseTrack;
 	ServerSocket serverSocket;
 
 	std::vector<POINT> mouseData;
