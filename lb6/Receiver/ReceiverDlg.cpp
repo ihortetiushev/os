@@ -35,13 +35,9 @@ void CReceiverDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CReceiverDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(ID_BTN1, &CReceiverDlg::OnBnClickedBtn1)
 	ON_BN_CLICKED(ID_BTN2, &CReceiverDlg::OnBnClickedBtn2)
 	ON_BN_CLICKED(BUTTON_CLEAR, &CReceiverDlg::OnBnClickedClear)
 	ON_WM_CLOSE()
-	ON_BN_CLICKED(IDC_BUTTON1, &CReceiverDlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &CReceiverDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON3, &CReceiverDlg::OnBnClickedButton3)
 END_MESSAGE_MAP()
 
 BOOL CReceiverDlg::OnInitDialog()
@@ -104,11 +100,6 @@ void CReceiverDlg::OnPaint()
 HCURSOR CReceiverDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
-}
-
-void CReceiverDlg::OnBnClickedBtn1()
-{
-
 }
 
 UINT CReceiverDlg::ReceiveData(LPVOID param)
@@ -466,10 +457,6 @@ void CReceiverDlg::OnClose()
 	CDialogEx::OnClose();
 }
 
-void CReceiverDlg::OnBnClickedButton1()
-{
-}
-
 void CReceiverDlg::CloseConnection() 
 {
 	int iResult;
@@ -487,15 +474,4 @@ void CReceiverDlg::CloseConnection()
 	// cleanup
 	closesocket(serverSocket);
 	WSACleanup();
-}
-
-void CReceiverDlg::OnBnClickedButton2()
-{
-
-}
-
-
-void CReceiverDlg::OnBnClickedButton3()
-{
-
 }

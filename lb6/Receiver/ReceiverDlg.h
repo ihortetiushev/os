@@ -65,11 +65,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedBtn1();
 	afx_msg void OnBnClickedBtn2();
 	afx_msg void OnBnClickedClear();
 	afx_msg void OnClose();
-	afx_msg void OnBnClickedButton1();
-	afx_msg void OnBnClickedButton2();
-	afx_msg void OnBnClickedButton3();
 };
