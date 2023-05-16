@@ -35,7 +35,7 @@ void CReceiverDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CReceiverDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(ID_BTN2, &CReceiverDlg::OnBnClickedBtn2)
+	ON_BN_CLICKED(BUTTON_DRAW, &CReceiverDlg::OnBnClickedDrawButton)
 	ON_BN_CLICKED(BUTTON_CLEAR, &CReceiverDlg::OnBnClickedClear)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
@@ -115,10 +115,6 @@ UINT CReceiverDlg::ReceiveData(LPVOID param)
 		return FALSE;
 	}
 
-	// No longer need server socket
-	//closesocket(ListenSocket);
-
-	//int iResult;
 	char recvbuf[DEFAULT_BUFLEN];
 	int recvbuflen = DEFAULT_BUFLEN;
 	std::vector<POINT> received;
@@ -147,8 +143,14 @@ UINT CReceiverDlg::ReceiveData(LPVOID param)
 		}
 
 	} while (iResult > 0);
-	ts->dialog->mouseData = received;
 
+	if (received.size() > 0) 
+	{
+		CWnd* brawButton = ts->dialog->GetDlgItem(BUTTON_DRAW);
+		brawButton->EnableWindow(TRUE);
+		ts->dialog->mouseData = received;
+		ts->dialog->StartDrawing();
+	}
 	
 	//after data receiving get ready for getting new data again
 	AfxBeginThread(ReceiveData, param);
@@ -397,13 +399,17 @@ UINT CReceiverDlg::DrawMainTrack(LPVOID param)
 	return TRUE;
 }
 
-void CReceiverDlg::OnBnClickedBtn2()
+void CReceiverDlg::StartDrawing() 
 {
 	THREADSTRUCT* param = new THREADSTRUCT;
 	param->dialog = this;
 	AfxBeginThread(DrawMainTrack, param);
 	AfxBeginThread(DrawBackground, param);
+}
 
+void CReceiverDlg::OnBnClickedDrawButton()
+{
+	StartDrawing();
 }
 
 void CReceiverDlg::OnBnClickedClear()

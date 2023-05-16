@@ -57,6 +57,7 @@ protected:
 	BOOL SaveSettingsToRegistry();
 	int GetEditControlIntValue(int controlId);
 	void CloseConnection();
+	void StartDrawing();
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
@@ -65,7 +66,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedBtn2();
+	afx_msg void OnBnClickedDrawButton();
 	afx_msg void OnBnClickedClear();
 	afx_msg void OnClose();
 };

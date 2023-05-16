@@ -6,6 +6,7 @@
 #define IDR_MAINFRAME                   128
 #define ID_BTN1                         1000
 #define ID_BTN2                         1001
+#define BUTTON_DRAW                     1001
 #define LABEL1                          1002
 #define CNT2_LABEL                      1003
 #define LABEL2                          1003
@@ -18,9 +19,6 @@
 #define BLUE_LABEL                      1009
 #define IDC_EDIT2                       1010
 #define EDIT_SIZE                       1010
-#define IDC_BUTTON1                     1011
-#define IDC_BUTTON2                     1012
-#define IDC_BUTTON3                     1013
 
 // Next default values for new objects
 // 
