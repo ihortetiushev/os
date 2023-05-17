@@ -1,46 +1,44 @@
 
-// Receiver.cpp : Defines the class behaviors for the application.
+// Runner.cpp : Defines the class behaviors for the application.
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "Receiver.h"
-#include "ReceiverDlg.h"
+#include "Runner.h"
+#include "RunnerDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CReceiverApp
+// CRunnerApp
 
-BEGIN_MESSAGE_MAP(CReceiverApp, CWinApp)
+BEGIN_MESSAGE_MAP(CRunnerApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CReceiverApp construction
+// CRunnerApp construction
 
-CReceiverApp::CReceiverApp()
+CRunnerApp::CRunnerApp()
 {
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 }
 
 
-// The one and only CReceiverApp object
+// The one and only CRunnerApp object
 
-CReceiverApp theApp;
+CRunnerApp theApp;
 
 
-// CReceiverApp initialization
+// CRunnerApp initialization
 
-BOOL CReceiverApp::InitInstance()
+BOOL CRunnerApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	// Create the shell manager, in case the dialog contains
 	// any shell tree view or shell list view controls.
@@ -58,13 +56,12 @@ BOOL CReceiverApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	CReceiverDlg dlg;
+	CRunnerDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
+
 	}
 	else if (nResponse == IDCANCEL)
 	{
@@ -83,7 +80,6 @@ BOOL CReceiverApp::InitInstance()
 		delete pShellManager;
 	}
 
-
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 	ControlBarCleanUp();
 #endif
@@ -91,11 +87,5 @@ BOOL CReceiverApp::InitInstance()
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
 	return FALSE;
-}
-
-int CReceiverApp::ExitInstance()
-{
-	GdiplusShutdown(gdiplusToken);
-	return CWinApp::ExitInstance();
 }
 

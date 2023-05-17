@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
-    <ProjectGuid>{31AB9A2B-B67E-4ACA-B3AA-45D5C7EB0118}</ProjectGuid>
+    <ProjectGuid>{A68FC738-01C1-4992-A4C4-8EE20E3335AF}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
-    <RootNamespace>Receiver</RootNamespace>
+    <RootNamespace>Runner</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -93,10 +93,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>C:\ihor\2cource\os\lb6\shared_lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>gdiplus.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\ihor\2cource\os\lb6\shared_lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sharedlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -184,33 +186,31 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Buffer.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Receiver.h" />
-    <ClInclude Include="ReceiverDlg.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Runner.h" />
+    <ClInclude Include="RunnerDlg.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Receiver.cpp" />
-    <ClCompile Include="ReceiverDlg.cpp" />
+    <ClCompile Include="Runner.cpp" />
+    <ClCompile Include="RunnerDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Receiver.rc" />
+    <ResourceCompile Include="Runner.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\Receiver.rc2" />
+    <None Include="res\Runner.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\Receiver.ico" />
+    <Image Include="res\Runner.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
