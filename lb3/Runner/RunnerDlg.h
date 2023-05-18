@@ -10,8 +10,6 @@ const int DEFAULT_TRACKING_RESOLUTIONL_MS = 20;
 const LPCTSTR APP_NAME = L"MouseTracker";
 const LPCTSTR TRACK_TIME_REGISTRY_KEY = L"TOTAL_TRACKING_TIME";
 const LPCTSTR MEASUREMENT_RESOLUTION_REGISTRY_KEY = L"MEASUREMENT_RESOLUTION";
-const int TRANSFER_DATA_KEY = 100;
-const int CAPTURE_DATA_KEY = 200;
 
 // CRunnerDlg dialog
 class CRunnerDlg : public CDialogEx
@@ -50,8 +48,7 @@ protected:
 	DECLARE_MESSAGE_MAP();
 
 	void ReadSettingsFromRegistry();
-	void RegisterHotKeys();
-	void UnRegisterHotKeys();
+	void SetGlobalKeyboardHook();
 	BOOL SaveSettingsToRegistry();
 	int ReadTotalTrackingTime();
 	int ReadTrackingResolution();

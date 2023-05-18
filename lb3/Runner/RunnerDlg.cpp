@@ -106,18 +106,13 @@ void CRunnerDlg::ReadSettingsFromRegistry()
 	SetDlgItemText(TRACKING_RESOLUTION_INPUT, trackingResilutionStr);
 }
 
-void CRunnerDlg::RegisterHotKeys()
+void CRunnerDlg::SetGlobalKeyboardHook()
 {
 	instanceHolder->dialog = this;
 	if (!(_hook = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, NULL, 0)))
 	{
 		AfxMessageBox(_T("Failed to install hook!"));
 	}
-}
-
-void CRunnerDlg::UnRegisterHotKeys()
-{
-	UnhookWindowsHookEx(_hook);
 }
 
 BOOL CRunnerDlg::SaveSettingsToRegistry()
@@ -173,7 +168,7 @@ BOOL CRunnerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	ReadSettingsFromRegistry();
-	RegisterHotKeys();
+	SetGlobalKeyboardHook();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -306,6 +301,6 @@ int CRunnerDlg::ReadTrackingResolution()
 void CRunnerDlg::OnBnClickedCancel()
 {
 	SaveSettingsToRegistry();
-	UnRegisterHotKeys();
+	UnhookWindowsHookEx(_hook);
 	CDialogEx::OnCancel();
 }
