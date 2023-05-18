@@ -15,7 +15,11 @@
 #define new DEBUG_NEW
 #endif
 
+HHOOK _hook;
+
+KBDLLHOOKSTRUCT kbdStruct;
 // CAboutDlg dialog used for App About
+static CRunnerDlg::THREADSTRUCT* instanceHolder = new CRunnerDlg::THREADSTRUCT;
 
 class CAboutDlg : public CDialogEx
 {
@@ -49,9 +53,6 @@ END_MESSAGE_MAP()
 
 
 // CRunnerDlg dialog
-
-
-
 CRunnerDlg::CRunnerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_RUNNER_DIALOG, pParent)
 {
@@ -63,13 +64,35 @@ void CRunnerDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
+LRESULT __stdcall CRunnerDlg::HookCallback(int nCode, WPARAM wParam, LPARAM lParam) 
+{
+	if (nCode >= 0)
+	{
+		// the action is valid: HC_ACTION.
+		if (wParam == WM_KEYDOWN)
+		{
+
+			// lParam is the pointer to the struct containing the data needed, so cast and assign it to kdbStruct.
+			kbdStruct = *((KBDLLHOOKSTRUCT*)lParam);
+			if (GetAsyncKeyState(VK_CONTROL) && GetAsyncKeyState(VK_MENU) && (kbdStruct.vkCode == 77)) 
+			{//ctrl + alt + m
+				instanceHolder->dialog->StartCapture();
+			} else if (GetAsyncKeyState(VK_CONTROL) && (kbdStruct.vkCode == 77))
+			{//ctrl + m
+				instanceHolder->dialog->DoDataTransfer();
+			}
+		}
+	}
+	// call the next hook in the hook chain. This is nessecary or your hook chain will break and the hook stops
+	return CallNextHookEx(_hook, nCode, wParam, lParam);
+}
+
 BEGIN_MESSAGE_MAP(CRunnerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDOK, &CRunnerDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDCANCEL, &CRunnerDlg::OnBnClickedCancel)
-	ON_MESSAGE(WM_HOTKEY, &CRunnerDlg::OnHotKey)
 END_MESSAGE_MAP()
 
 void CRunnerDlg::ReadSettingsFromRegistry()
@@ -83,29 +106,18 @@ void CRunnerDlg::ReadSettingsFromRegistry()
 	SetDlgItemText(TRACKING_RESOLUTION_INPUT, trackingResilutionStr);
 }
 
-LRESULT CRunnerDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
-{
-	switch (wParam)
-	{
-	case CAPTURE_DATA_KEY:
-		StartCapture();
-		break;
-	case TRANSFER_DATA_KEY:
-		DoDataTransfer();
-		break;
-	}
-	return 0;
-}
-
 void CRunnerDlg::RegisterHotKeys()
 {
-	RegisterHotKey(GetSafeHwnd(), TRANSFER_DATA_KEY, MOD_CONTROL, 'M');
-	RegisterHotKey(GetSafeHwnd(), CAPTURE_DATA_KEY, MOD_ALT | MOD_CONTROL, 'M');
+	instanceHolder->dialog = this;
+	if (!(_hook = SetWindowsHookEx(WH_KEYBOARD_LL, HookCallback, NULL, 0)))
+	{
+		AfxMessageBox(_T("Failed to install hook!"));
+	}
 }
 
 void CRunnerDlg::UnRegisterHotKeys()
 {
-	UnregisterHotKey(GetSafeHwnd(), TRANSFER_DATA_KEY);
+	UnhookWindowsHookEx(_hook);
 }
 
 BOOL CRunnerDlg::SaveSettingsToRegistry()

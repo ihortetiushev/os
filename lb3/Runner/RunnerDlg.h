@@ -12,18 +12,20 @@ const LPCTSTR TRACK_TIME_REGISTRY_KEY = L"TOTAL_TRACKING_TIME";
 const LPCTSTR MEASUREMENT_RESOLUTION_REGISTRY_KEY = L"MEASUREMENT_RESOLUTION";
 const int TRANSFER_DATA_KEY = 100;
 const int CAPTURE_DATA_KEY = 200;
+
 // CRunnerDlg dialog
 class CRunnerDlg : public CDialogEx
 {
 	static UINT TrackMouse(LPVOID param);
+	static LRESULT __stdcall HookCallback(int nCode, WPARAM wParam, LPARAM lParam);
+// Construction
+
+public:
 	typedef struct THREADSTRUCT
 	{
 		CRunnerDlg* dialog;
 		//you can add here other parameters you might be interested on
 	} THREADSTRUCT;
-// Construction
-
-public:
 	CRunnerDlg(CWnd* pParent = nullptr);	// standard constructor
 
 // Dialog Data
@@ -41,7 +43,7 @@ protected:
 	BOOL captureInProgress = FALSE;
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
-	LRESULT OnHotKey(WPARAM wParam, LPARAM lParam);
+
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
