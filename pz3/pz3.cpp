@@ -19,6 +19,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+void SetScale(int percent);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -146,6 +147,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
+
+            case ID_SCALE100:
+                SetScale(100);
+                break;
+
+            case ID_SCALE150:
+                SetScale(150);
+                break;
+
+            case ID_SCALE200:
+                SetScale(200);
+                break;
+
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -157,11 +171,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             HDC hdc = BeginPaint(hWnd, &ps);
             RECT rt;  
             GetClientRect(hWnd, &rt);
-            DrawText(hdc, _T("Привіт, мир!"), -1, &rt, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
-            EndPaint(hWnd, &ps);
-            break;
-
-
             EndPaint(hWnd, &ps);
         }
         break;
@@ -172,6 +181,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+void SetScale(int percent) 
+{
+    int width = WIDTH * ((double) percent / 100);
+    int height = HEIGHT * ((double) percent / 100);
+
+    HWND handle = ::FindWindow(NULL, szTitle);
+
+    ::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 }
 
 // Message handler for about box.
