@@ -10,7 +10,7 @@
 HINSTANCE hInst;                                // current instance
 // the main window class name
 LPCTSTR szWindowClass = _T("IHOR_TETIUSHEV");
-LPCTSTR szTitle = _T("ог3");
+LPCTSTR szTitle = _T("ог_3");
 const int WIDTH = 500;
 const int HEIGHT = 200;
 
